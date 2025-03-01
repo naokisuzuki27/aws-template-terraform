@@ -1,9 +1,16 @@
-provider "aws" {
-  region = "ap-northeast-1"
+# モジュール定義
+module "vpc" {
+  source = "./vpc"
 }
 
+module "ecs" {
+  source = "./ecs"
+}
+
+# リソース作成
+# ALB
 resource "aws_lb" "alb" {
-  name               = "ecs-alb"
+  name               = "${local.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = aws_security_group.alb_sg.id
@@ -11,11 +18,12 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
 
-  tags = {
-    Name = "ecs-alb"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-alb"
+  })
+}}
 
+# ターゲットグループ
 resource "aws_lb_target_group" "tg_gp" {
   name     = "ecs-alb-tg"
   port     = 80
@@ -31,6 +39,7 @@ resource "aws_lb_target_group" "tg_gp" {
   }
 }
 
+# リスナー
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.tg_gp.arn
   port              = 80
@@ -42,8 +51,9 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# セキュリティグループ
 resource "aws_security_group" "alb_sg" {
-  name_prefix = "alb-sg"
+  name_prefix = "${local.name_prefix}-alb-sg"
   vpc_id      = aws_vpc.vpc.id
 
   ingress {
@@ -68,6 +78,19 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "ecs-alb-sg"
+    Name = "${local.name_prefix}-alb-sg"
   }
+}
+
+# output
+# セキュリティグループ
+output "alb_sg" {
+  description = "alb sg"
+  value       = aws_security_group.alb_sg.id
+}
+
+# ターゲットグループARN
+output "alb_sg" {
+  description = "tg_gp_arn"
+  value       = aws_lb_target_group.tg_gp.arn
 }

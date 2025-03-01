@@ -1,24 +1,26 @@
+# AWSを定義
 provider "aws" {
-  region = "ap-northeast-1"  # リージョン
+  region = "${local.region}"
 }
 
+# リソース作成
 # VPC
 resource "aws_vpc" "vpc" {
   cidr_block = "192.168.0.0/24"
 
-  tags = {
-    Name = "ecs-naoki"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-vpc"
+  })
+}}
 
 # インターネットゲートウェイ
 resource "aws_internet_gateway" "inet-gw" {
   vpc_id = aws_vpc.vpc.id
 
-  tags = {
-    Name = "ecs-igw"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-igw"
+  })
+}}
 
 # パブリックサブネット
 resource "aws_subnet" "public_1a" {
@@ -27,10 +29,10 @@ resource "aws_subnet" "public_1a" {
   availability_zone       = "ap-northeast-1a"
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = "ecs-public-subnet-1a"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-public-subnet-1a"
+  })
+}}
 
 resource "aws_subnet" "public_1c" {
   vpc_id                  = aws_vpc.vpc.id
@@ -38,10 +40,10 @@ resource "aws_subnet" "public_1c" {
   availability_zone       = "ap-northeast-1c"
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = "ecs-public-subnet-1c"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-public-subnet-1c"
+  })
+}}
 
 # プライベートサブネット
 resource "aws_subnet" "private_1a" {
@@ -50,10 +52,10 @@ resource "aws_subnet" "private_1a" {
   availability_zone       = "ap-northeast-1a"
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = "ecs-private-subnet-1a"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-subnet-1a"
+  })
+}}
 
 resource "aws_subnet" "private_1c" {
   vpc_id                  = aws_vpc.vpc.id
@@ -61,29 +63,29 @@ resource "aws_subnet" "private_1c" {
   availability_zone       = "ap-northeast-1c"
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = "ecs-private-subnet-1c"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-subnet-1c"
+  })
+}}
 
 # Elastic IP (EIP) for NAT Gateway
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 
-  tags = {
-    Name = "ecs-nat-eip"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-nat-eip"
+  })
+}}
 
 # NAT Gateway (パブリックサブネット 1a に設置)
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public_1a.id
 
-  tags = {
-    Name = "ecs-nat-gw"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-nat-gw"
+  })
+}}
 
 # パブリックサブネット用のルートテーブル
 resource "aws_route_table" "public_rt" {
@@ -94,10 +96,10 @@ resource "aws_route_table" "public_rt" {
     gateway_id = aws_internet_gateway.inet-gw.id
   }
 
-  tags = {
-    Name = "ecs-public-route-table"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-public-route-table"
+  })
+}}
 
 # プライベートサブネット用のルートテーブル
 resource "aws_route_table" "private_rt" {
@@ -108,10 +110,10 @@ resource "aws_route_table" "private_rt" {
     gateway_id = aws_nat_gateway.nat_gw.id  # NAT Gateway 経由で通信
   }
 
-  tags = {
-    Name = "ecs-private-route-table"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-route-table"
+  })
+}}
 
 # ルートテーブルとパブリックサブネットを関連付け
 resource "aws_route_table_association" "public_1a" {
@@ -133,4 +135,61 @@ resource "aws_route_table_association" "private_1a" {
 resource "aws_route_table_association" "private_1c" {
   subnet_id      = aws_subnet.private_1c.id
   route_table_id = aws_route_table.private_rt.id
+}
+
+# VPCのIDを出力
+output "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.vpc.id
+}
+
+# インターネットゲートウェイのIDを出力
+output "internet_gateway_id" {
+  description = "Internet Gateway ID"
+  value       = aws_internet_gateway.inet-gw.id
+}
+
+# パブリックサブネットのIDを出力
+output "public_subnet_1a_id" {
+  description = "Public Subnet 1a ID"
+  value       = aws_subnet.public_1a.id
+}
+
+output "public_subnet_1c_id" {
+  description = "Public Subnet 1c ID"
+  value       = aws_subnet.public_1c.id
+}
+
+# プライベートサブネットのIDを出力
+output "private_subnet_1a_id" {
+  description = "Private Subnet 1a ID"
+  value       = aws_subnet.private_1a.id
+}
+
+output "private_subnet_1c_id" {
+  description = "Private Subnet 1c ID"
+  value       = aws_subnet.private_1c.id
+}
+
+# NAT GatewayのIDを出力
+output "nat_gateway_id" {
+  description = "NAT Gateway ID"
+  value       = aws_nat_gateway.nat_gw.id
+}
+
+# NAT EIPのIDを出力
+output "nat_eip_id" {
+  description = "Elastic IP (EIP) ID for NAT Gateway"
+  value       = aws_eip.nat_eip.id
+}
+
+# ルートテーブルのIDを出力
+output "public_route_table_id" {
+  description = "Public Route Table ID"
+  value       = aws_route_table.public_rt.id
+}
+
+output "private_route_table_id" {
+  description = "Private Route Table ID"
+  value       = aws_route_table.private_rt.id
 }
