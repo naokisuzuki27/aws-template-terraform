@@ -1,10 +1,18 @@
 # モジュール指定
 module "vpc" {
-  source = "./vpc"
+  source = "../vpc/output"
 }
 
 module "alb" {
-  source = "./alb"
+  source = "../alb/output"
+}
+
+module "security_group" {
+  source = "../security_group/output"
+}
+
+module "iam" {
+  source = "../iam/output"
 }
 
 # ECSクラスター
@@ -21,48 +29,15 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   })
 }}
 
-
-# セキュリティグループ（ECSタスク用）
-resource "aws_security_group" "ecs_sg" {
-  name        = "${local.name_prefix}-ecstasks-sg"
-  description = "Security group for ECS tasks"
-  vpc_id      = aws_vpc.vpc.id
-
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { merge(local.common_tags, {
-    Name = "ecs_sg"
-  })
-}}
-
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/app"
   retention_in_days = 30
 
-  tags = {
-    Environment = "${var.environment}"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Environment = "${local.environment}"
+  })
+}}
 
 # タスク定義 (Next.js 用)
 resource "aws_ecs_task_definition" "app" {
@@ -76,7 +51,7 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([{
     name      = "app"
-    image     = "todo-naoki/nextjs-app:latest"  # Next.js の Docker イメージ
+    image     = "front/nextjs-app:latest"  # Next.js の Docker イメージ
     essential = true
     portMappings = [
       {
@@ -109,7 +84,7 @@ resource "aws_ecs_task_definition" "app" {
   }])
 
   tags = { merge(local.common_tags, {
-    Name        = "nextjs-app-task-definition"
+    Name        = "nextjs-app-task-front-definition"
     Environment = "production"
   })
 }}
@@ -130,7 +105,7 @@ resource "aws_ecs_service" "app" {
 
   network_configuration {
     subnets          = [aws_subnet.public_1a.id]
-    security_groups  = [aws_security_group.ecs_sg.id]
+    security_groups  = [aws_security_group.ecs_front_sg.id]
     assign_public_ip = false
   }
 
@@ -145,7 +120,7 @@ resource "aws_ecs_service" "app" {
   }
 
   tags = { merge(local.common_tags, {
-    Name        = "nextjs-app-service"
+    Name        = "nextjs-app-front-service"
     Environment = "production"
   })
 }}

@@ -1,10 +1,18 @@
 # モジュール指定
 module "vpc" {
-  source = "./vpc"
+  source = "../vpc/output"
 }
 
 module "alb" {
-  source = "./alb"
+  source = "../alb/output"
+}
+
+module "security_group" {
+  source = "../security_group/output"
+}
+
+module "iam" {
+  source = "../iam/output"
 }
 
 # ECSクラスター
@@ -21,57 +29,15 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   })
 }}
 
-# タスク実行ロール
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-# ポリシーアタッチメント
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# タスクロール（コンテナからAWSリソースへのアクセス用）
-resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-task-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/app"
   retention_in_days = 30
 
-  tags = {
-    Environment = "${var.environment}"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Environment = "${local.environment}"
+  })
+}}
 
 # タスク定義 (Next.js 用)
 resource "aws_ecs_task_definition" "app" {
@@ -85,7 +51,7 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([{
     name      = "app"
-    image     = "todo-naoki/nextjs-app:latest"  # Next.js の Docker イメージ
+    image     = "basis/nextjs-app:latest"  # Next.js の Docker イメージ
     essential = true
     portMappings = [
       {
@@ -118,7 +84,7 @@ resource "aws_ecs_task_definition" "app" {
   }])
 
   tags = { merge(local.common_tags, {
-    Name        = "nextjs-app-task-definition"
+    Name        = "nextjs-app-task-basis-definition"
     Environment = "production"
   })
 }}
@@ -139,7 +105,7 @@ resource "aws_ecs_service" "app" {
 
   network_configuration {
     subnets          = [aws_subnet.private_1a.id]
-    security_groups  = [aws_security_group.ecs_sg.id]
+    security_groups  = [aws_security_group.ecs_basis_sg.id]
     assign_public_ip = false  # プライベートサブネットを使用する場合
   }
 
@@ -154,7 +120,7 @@ resource "aws_ecs_service" "app" {
   }
 
   tags = { merge(local.common_tags, {
-    Name        = "nextjs-app-service"
+    Name        = "nextjs-app-basis-service"
     Environment = "production"
   })
 }}
@@ -184,9 +150,4 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
     scale_in_cooldown  = 300
     scale_out_cooldown = 300
   }
-}
-
-output "ecs_task_security_group_id" {
-  description = "ID of the security group for ECS tasks"
-  value       = aws_security_group.ecs_sg.id
 }

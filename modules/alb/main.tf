@@ -1,10 +1,10 @@
 # モジュール定義
 module "vpc" {
-  source = "./vpc"
+  source = "../vpc/output"
 }
 
 module "ecs" {
-  source = "./ecs"
+  source = "../ecs/output"
 }
 
 # リソース作成
