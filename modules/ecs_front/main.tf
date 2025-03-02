@@ -9,7 +9,7 @@ module "alb" {
 
 # ECSクラスター
 resource "aws_ecs_cluster" "ecs-cluster" {
-  name = "${local.name_prefix}-cluster"
+  name = "${local.name_prefix}-front-cluster"
 
   setting {
     name  = "containerInsights"
@@ -17,51 +17,10 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   }
 
   tags = { merge(local.common_tags, {
-    Name        = "${local.name_prefix}-cluster"
+    Name        = "${local.name_prefix}-front-cluster"
   })
 }}
 
-# タスク実行ロール
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-# ポリシーアタッチメント
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# タスクロール（コンテナからAWSリソースへのアクセス用）
-resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-task-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
 
 # セキュリティグループ（ECSタスク用）
 resource "aws_security_group" "ecs_sg" {
@@ -170,9 +129,9 @@ resource "aws_ecs_service" "app" {
   health_check_grace_period_seconds  = 60
 
   network_configuration {
-    subnets          = [aws_subnet.private_1a.id]
+    subnets          = [aws_subnet.public_1a.id]
     security_groups  = [aws_security_group.ecs_sg.id]
-    assign_public_ip = false  # プライベートサブネットを使用する場合
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -218,7 +177,3 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
   }
 }
 
-output "ecs_task_security_group_id" {
-  description = "ID of the security group for ECS tasks"
-  value       = aws_security_group.ecs_sg.id
-}
