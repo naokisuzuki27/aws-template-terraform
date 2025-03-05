@@ -1,18 +1,18 @@
 # モジュール指定
 module "vpc" {
-  source = "../vpc/output"
+  source = "./vpc"
 }
 
 module "alb" {
-  source = "../alb/output"
+  source = "./alb"
 }
 
 module "security_group" {
-  source = "../security_group/output"
+  source = "./security_group"
 }
 
 module "iam" {
-  source = "../iam/output"
+  source = "./iam"
 }
 
 # ECSクラスター

@@ -1,6 +1,6 @@
 # モジュール定義
 module "vpc" {
-  source = "../vpc/output"
+  source = "./vpc"
 }
 
 module "ecs" {

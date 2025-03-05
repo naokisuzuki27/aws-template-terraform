@@ -1,4 +1,4 @@
-# ALB
+# ALB ##########################################################################################
 resource "aws_security_group" "alb_sg" {
   name_prefix = "${local.name_prefix}-alb-sg"
   vpc_id      = aws_vpc.vpc.id
@@ -43,7 +43,7 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# 基盤ECS用
+# 基盤ECS用 ##########################################################################################
 resource "aws_security_group" "ecs_basis_sg" {
   name        = "${local.name_prefix}-ecs-basis-sg"
   description = "Security group for ECS tasks"
@@ -103,7 +103,7 @@ resource "aws_security_group" "ecs_basis_sg" {
   })
 }}
 
-# サーバーレンダリングECS用
+# サーバーレンダリングECS用 ##########################################################################################
 resource "aws_security_group" "ecs_front_sg" {
   name        = "${local.name_prefix}-ecs-front-sg"
   description = "Security group for ECS tasks"
@@ -139,5 +139,30 @@ resource "aws_security_group" "ecs_front_sg" {
 
   tags = { merge(local.common_tags, {
     Name = "${local.name_prefix}-ecs-front-sg"
+  })
+}}
+
+# RDS ##########################################################################################
+resource "aws_security_group" "rds_sg" {
+  name        = "${local.name_prefix}-rds_sg"
+  description = "Security group for rds "
+  vpc_id      = aws_vpc.vpc.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_basis_sg.id]
+  }
+
+  egress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    security_groups = [aws_security_group.ecs_basis_sg.id]
+  }
+
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-rds_sg"
   })
 }}
