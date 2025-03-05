@@ -1,9 +1,16 @@
-provider "aws" {
-  region = "ap-northeast-1"
+# モジュール定義
+module "vpc" {
+  source = "./vpc"
 }
 
+module "ecs" {
+  source = "../ecs/output"
+}
+
+# リソース作成
+# ALB
 resource "aws_lb" "alb" {
-  name               = "ecs-alb"
+  name               = "${local.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = aws_security_group.alb_sg.id
@@ -11,11 +18,12 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
 
-  tags = {
-    Name = "ecs-alb"
-  }
-}
+  tags = { merge(local.common_tags, {
+    Name = "${local.name_prefix}-alb"
+  })
+}}
 
+# ターゲットグループ
 resource "aws_lb_target_group" "tg_gp" {
   name     = "ecs-alb-tg"
   port     = 80
@@ -31,6 +39,7 @@ resource "aws_lb_target_group" "tg_gp" {
   }
 }
 
+# リスナー
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.tg_gp.arn
   port              = 80
@@ -39,35 +48,5 @@ resource "aws_lb_listener" "http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.tg_gp.arn
-  }
-}
-
-resource "aws_security_group" "alb_sg" {
-  name_prefix = "alb-sg"
-  vpc_id      = aws_vpc.vpc.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    prefix_list_ids = ["pl-58a04531"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    prefix_list_ids = ["pl-58a04531"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    security_groups = [aws_security_group.ecs_sg.id]
-  }
-
-  tags = {
-    Name = "ecs-alb-sg"
   }
 }
