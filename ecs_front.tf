@@ -1,22 +1,5 @@
-# モジュール指定
-module "vpc" {
-  source = "../vpc/output"
-}
-
-module "alb" {
-  source = "../alb/output"
-}
-
-module "security_group" {
-  source = "../security_group/output"
-}
-
-module "iam" {
-  source = "../iam/output"
-}
-
 # ECSクラスター
-resource "aws_ecs_cluster" "ecs-cluster" {
+resource "aws_ecs_cluster" "ecs-front-cluster" {
   name = "${local.name_prefix}-front-cluster"
 
   setting {
@@ -24,23 +7,23 @@ resource "aws_ecs_cluster" "ecs-cluster" {
     value = "enabled"
   }
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "${local.name_prefix}-front-cluster"
   })
-}}
+}
 
 # CloudWatch Logs グループ
-resource "aws_cloudwatch_log_group" "app" {
+resource "aws_cloudwatch_log_group" "front-app" {
   name              = "/ecs/app"
   retention_in_days = 30
 
-  tags = { merge(local.common_tags, {
-    Environment = "${local.environment}"
+  tags = merge(local.common_tags, {
+    Environment = "ecs-front-${local.environment}"
   })
-}}
+}
 
 # タスク定義 (Next.js 用)
-resource "aws_ecs_task_definition" "app" {
+resource "aws_ecs_task_definition" "front-app" {
   family                   = "app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -83,16 +66,16 @@ resource "aws_ecs_task_definition" "app" {
     }
   }])
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "nextjs-app-task-front-definition"
     Environment = "production"
   })
-}}
+}
 
 # ECSサービス
-resource "aws_ecs_service" "app" {
-  name            = "app-service"
-  cluster         = aws_ecs_cluster.ecs-cluster.id
+resource "aws_ecs_service" "front-app" {
+  name            = "front-app-service"
+  cluster         = aws_ecs_cluster.ecs-front-cluster.id
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 2
   launch_type     = "FARGATE"
@@ -110,7 +93,7 @@ resource "aws_ecs_service" "app" {
   }
 
   load_balancer {
-    target_group_arn = [aws_lb_target_group.tg_gp.arn]
+    target_group_arn = aws_lb_target_group.tg_gp.arn
     container_name   = "app"
     container_port   = 3000  # Next.js のポートを指定
   }
@@ -119,23 +102,23 @@ resource "aws_ecs_service" "app" {
     ignore_changes = [desired_count]  # Auto Scalingで調整される場合
   }
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "nextjs-app-front-service"
     Environment = "production"
   })
-}}
+}
 
 # Auto Scaling
-resource "aws_appautoscaling_target" "ecs_target" {
+resource "aws_appautoscaling_target" "front-ecs_target" {
   max_capacity       = 2
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.ecs-cluster.name}/${aws_ecs_service.app.name}"
+  resource_id        = "service/${aws_ecs_cluster.ecs-front-cluster.name}/${aws_ecs_service.app.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
 # CPU使用率に基づくスケーリングポリシー
-resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
+resource "aws_appautoscaling_policy" "front-ecs_policy_cpu" {
   name               = "cpu-auto-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.ecs_target.resource_id
@@ -151,4 +134,3 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
     scale_out_cooldown = 300
   }
 }
-

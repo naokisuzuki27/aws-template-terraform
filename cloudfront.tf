@@ -1,8 +1,3 @@
-# モジュール定義
-module "alb" {
-  source = "./alb"
-}
-
 # CloudFront ディストリビューション
 resource "aws_cloudfront_distribution" "ecs_distribution" {
   enabled             = true
@@ -32,7 +27,7 @@ resource "aws_cloudfront_distribution" "ecs_distribution" {
   # デフォルトのキャッシュ動作設定
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods   = ["GET", "HEAD"al2023_]
+    cached_methods   = ["GET", "HEAD"]
     target_origin_id = "ALB-${aws_lb.alb.dns_name}"
     
     forwarded_values {
@@ -64,11 +59,11 @@ resource "aws_cloudfront_distribution" "ecs_distribution" {
   }
   
   # タグ
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Environment = "test"
     Name        = "test-ecs-cloudfront-distribution"
   })
-}}
+}
 
 # テスト用の CloudFront キャッシュポリシー（オプション）
 resource "aws_cloudfront_cache_policy" "no_cache_policy" {

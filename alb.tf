@@ -1,27 +1,18 @@
-# モジュール定義
-module "vpc" {
-  source = "./vpc"
-}
-
-module "ecs" {
-  source = "../ecs/output"
-}
-
-# リソース作成
 # ALB
 resource "aws_lb" "alb" {
   name               = "${local.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = aws_security_group.alb_sg.id
+  security_groups    = [aws_security_group.alb_sg.id]
   subnets            = [aws_subnet.public_1a.id, aws_subnet.public_1c.id]
 
   enable_deletion_protection = false
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-alb"
   })
-}}
+}
+
 
 # ターゲットグループ
 resource "aws_lb_target_group" "tg_gp" {
@@ -41,7 +32,7 @@ resource "aws_lb_target_group" "tg_gp" {
 
 # リスナー
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.tg_gp.arn
+  load_balancer_arn = aws_lb.alb.arn
   port              = 80
   protocol          = "HTTP"
 
