@@ -90,21 +90,3 @@ resource "aws_cloudfront_cache_policy" "no_cache_policy" {
     enable_accept_encoding_brotli = true
   }
 }
-
-# CloudWatch アラーム - 基本的なモニタリング（オプション）
-resource "aws_cloudwatch_metric_alarm" "cloudfront_5xx_errors" {
-  alarm_name          = "test-cloudfront-5xx-errors"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "1"
-  metric_name         = "5xxErrorRate"
-  namespace           = "AWS/CloudFront"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "5"
-  alarm_description   = "This metric monitors cloudfront 5xx error rate for test environment"
-  
-  dimensions = {
-    DistributionId = aws_cloudfront_distribution.ecs_distribution.id
-    Region         = "Global"
-  }
-}
