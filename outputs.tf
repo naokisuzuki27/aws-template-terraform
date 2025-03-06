@@ -98,7 +98,7 @@ output "ecs_task_role" {
 
 ### alb ##########################################################################
 # ターゲットグループARN
-output "alb_sg" {
+output "alb_arn" {
   description = "tg_gp_arn"
   value       = aws_lb_target_group.tg_gp.arn
 }
@@ -113,11 +113,6 @@ output "cloudfront_domain_name" {
 output "cloudfront_distribution_id" {
   description = "CloudFrontディストリビューションID"
   value       = aws_cloudfront_distribution.ecs_distribution.id
-}
-
-output "origin_alb_dns_name" {
-  description = "オリジンとして使用される既存ALBのDNS名"
-  value       = data.aws_lb.existing_alb.dns_name
 }
 
 ### s3 ##########################################################################

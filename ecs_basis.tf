@@ -1,20 +1,3 @@
-# モジュール指定
-module "vpc" {
-  source = "./vpc"
-}
-
-module "alb" {
-  source = "./alb"
-}
-
-module "security_group" {
-  source = "./security_group"
-}
-
-module "iam" {
-  source = "./iam"
-}
-
 # ECSクラスター
 resource "aws_ecs_cluster" "ecs-cluster" {
   name = "${local.name_prefix}-cluster"
@@ -24,20 +7,20 @@ resource "aws_ecs_cluster" "ecs-cluster" {
     value = "enabled"
   }
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "${local.name_prefix}-cluster"
   })
-}}
+}
 
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/app"
   retention_in_days = 30
 
-  tags = { merge(local.common_tags, {
-    Environment = "${local.environment}"
+  tags = merge(local.common_tags, {
+    Environment = "ecs-basis-${local.environment}"
   })
-}}
+}
 
 # タスク定義 (Next.js 用)
 resource "aws_ecs_task_definition" "app" {
@@ -83,11 +66,11 @@ resource "aws_ecs_task_definition" "app" {
     }
   }])
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "nextjs-app-task-basis-definition"
     Environment = "production"
   })
-}}
+}
 
 # ECSサービス
 resource "aws_ecs_service" "app" {
@@ -110,7 +93,7 @@ resource "aws_ecs_service" "app" {
   }
 
   load_balancer {
-    target_group_arn = [aws_lb_target_group.tg_gp.arn]
+    target_group_arn = aws_lb_target_group.tg_gp.arn
     container_name   = "app"
     container_port   = 3000  # Next.js のポートを指定
   }
@@ -119,11 +102,11 @@ resource "aws_ecs_service" "app" {
     ignore_changes = [desired_count]  # Auto Scalingで調整される場合
   }
 
-  tags = { merge(local.common_tags, {
+  tags = merge(local.common_tags, {
     Name        = "nextjs-app-basis-service"
     Environment = "production"
   })
-}}
+}
 
 # Auto Scaling
 resource "aws_appautoscaling_target" "ecs_target" {
