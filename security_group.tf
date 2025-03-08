@@ -42,15 +42,6 @@ resource "aws_security_group" "rds_sg" {
 }
 
 # ALBに対するインバウンドルール ##########################################################################################
-resource "aws_security_group_rule" "alb_ingress_rule_80" {
-  security_group_id = aws_security_group.alb_sg.id
-  type              = "ingress"
-  from_port         = 80
-  to_port           = 80
-  protocol          = "tcp"
-  prefix_list_ids   = ["pl-58a04531"]
-}
-
 resource "aws_security_group_rule" "alb_ingress_rule_443" {
   security_group_id = aws_security_group.alb_sg.id
   type              = "ingress"
