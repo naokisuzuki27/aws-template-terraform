@@ -3,6 +3,11 @@ provider "aws" {
   region = local.region
 }
 
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"  # CloudFront証明書用のリージョン
+}
+
 # リソース作成
 # VPC
 resource "aws_vpc" "vpc" {
