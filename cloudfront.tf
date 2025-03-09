@@ -83,10 +83,7 @@ resource "aws_cloudfront_cache_policy" "minimal_cache_policy" {
       }
     }
     query_strings_config {
-      query_string_behavior = "whitelist"
-      query_strings {
-        items = []  # 必要なクエリパラメータがあれば追加
-      }
+      query_string_behavior = "all"
     }
     enable_accept_encoding_gzip   = true
     enable_accept_encoding_brotli = true

@@ -14,7 +14,7 @@ resource "aws_ecs_cluster" "ecs-front-cluster" {
 
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "front-app" {
-  name              = "/ecs/app"
+  name              = "${local.name_prefix}-front-cluster"
   retention_in_days = 30
 
   tags = merge(local.common_tags, {

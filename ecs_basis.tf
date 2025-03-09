@@ -14,9 +14,8 @@ resource "aws_ecs_cluster" "ecs-cluster" {
 
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "app" {
-  name              = "/ecs/app"
+  name              = "${local.name_prefix}-cluster"
   retention_in_days = 30
-
   tags = merge(local.common_tags, {
     Environment = "ecs-basis-${local.environment}"
   })
