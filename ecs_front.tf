@@ -13,7 +13,7 @@ resource "aws_ecs_cluster" "ecs-front-cluster" {
 }
 
 # CloudWatch Logs グループ
-resource "aws_cloudwatch_log_group" "front-app" {
+resource "aws_cloudwatch_log_group" "log_front" {
   name              = "${local.name_prefix}-front-cluster"
   retention_in_days = 30
 
@@ -23,8 +23,8 @@ resource "aws_cloudwatch_log_group" "front-app" {
 }
 
 # タスク定義 (Next.js 用)
-resource "aws_ecs_task_definition" "front-app" {
-  family                   = "app"
+resource "aws_ecs_task_definition" "front-task" {
+  family                   = "front-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "front-app" {
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([{
-    name      = "app"
+    name      = "front-app"
     image     = "front/nextjs-app:latest"  # Next.js の Docker イメージ
     essential = true
     portMappings = [
@@ -46,7 +46,7 @@ resource "aws_ecs_task_definition" "front-app" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-group"         = aws_cloudwatch_log_group.log_front.name
         "awslogs-region"        = local.region
         "awslogs-stream-prefix" = "ecs"
       }
@@ -73,10 +73,10 @@ resource "aws_ecs_task_definition" "front-app" {
 }
 
 # ECSサービス
-resource "aws_ecs_service" "front-app" {
+resource "aws_ecs_service" "front-service" {
   name            = "front-app-service"
   cluster         = aws_ecs_cluster.ecs-front-cluster.id
-  task_definition = aws_ecs_task_definition.app.arn
+  task_definition = aws_ecs_task_definition.front-task.arn
   desired_count   = 2
   launch_type     = "FARGATE"
   platform_version = "LATEST"
@@ -112,7 +112,7 @@ resource "aws_ecs_service" "front-app" {
 resource "aws_appautoscaling_target" "front-ecs_target" {
   max_capacity       = 2
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.ecs-front-cluster.name}/${aws_ecs_service.app.name}"
+  resource_id        = "service/${aws_ecs_cluster.ecs-front-cluster.name}/${aws_ecs_service.front-service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }

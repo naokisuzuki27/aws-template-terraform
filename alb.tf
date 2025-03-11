@@ -14,10 +14,10 @@ resource "aws_lb" "alb" {
 }
 
 
-# ターゲットグループ
+# ターゲットグループ (ECS 3000)
 resource "aws_lb_target_group" "tg_gp" {
-  name     = "ecs-alb-tg"
-  port     = 80
+  name     = "ecs-alb-tg-3000"
+  port     = 3000
   protocol = "HTTP"
   vpc_id   = aws_vpc.vpc.id
 
@@ -30,8 +30,8 @@ resource "aws_lb_target_group" "tg_gp" {
   }
 }
 
-# リスナー
-resource "aws_lb_listener" "http" {
+# ALB のリスナー (80 → ECS 3000)
+resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 80
   protocol          = "HTTP"

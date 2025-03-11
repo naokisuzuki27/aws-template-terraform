@@ -13,8 +13,8 @@ resource "aws_ecs_cluster" "ecs-cluster" {
 }
 
 # CloudWatch Logs グループ
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "${local.name_prefix}-cluster"
+resource "aws_cloudwatch_log_group" "log_basis" {
+  name              = "${local.name_prefix}--basis-cluster"
   retention_in_days = 30
   tags = merge(local.common_tags, {
     Environment = "ecs-basis-${local.environment}"
@@ -22,8 +22,8 @@ resource "aws_cloudwatch_log_group" "app" {
 }
 
 # タスク定義 (Next.js 用)
-resource "aws_ecs_task_definition" "app" {
-  family                   = "app"
+resource "aws_ecs_task_definition" "basis-task" {
+  family                   = "basis-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -32,7 +32,7 @@ resource "aws_ecs_task_definition" "app" {
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([{
-    name      = "app"
+    name      = "basis-app"
     image     = "basis/nextjs-app:latest"  # Next.js の Docker イメージ
     essential = true
     portMappings = [
@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "app" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-group"         = aws_cloudwatch_log_group.log_basis.name
         "awslogs-region"        = local.region
         "awslogs-stream-prefix" = "ecs"
       }
@@ -72,10 +72,10 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 # ECSサービス
-resource "aws_ecs_service" "app" {
-  name            = "app-service"
+resource "aws_ecs_service" "basis-service" {
+  name            = "basis-app-service"
   cluster         = aws_ecs_cluster.ecs-cluster.id
-  task_definition = aws_ecs_task_definition.app.arn
+  task_definition = aws_ecs_task_definition.basis-task.arn
   desired_count   = 2
   launch_type     = "FARGATE"
   platform_version = "LATEST"
@@ -111,7 +111,7 @@ resource "aws_ecs_service" "app" {
 resource "aws_appautoscaling_target" "ecs_target" {
   max_capacity       = 2
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.ecs-cluster.name}/${aws_ecs_service.app.name}"
+  resource_id        = "service/${aws_ecs_cluster.ecs-cluster.name}/${aws_ecs_service.basis-service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }

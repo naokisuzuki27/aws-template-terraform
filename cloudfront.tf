@@ -1,4 +1,30 @@
+resource "aws_cloudfront_cache_policy" "minimal_cache_policy" {
+  name        = "MinimalCache-TestPolicy"
+  comment     = "Policy with minimal caching for testing"
+  default_ttl = 60        # 1分間キャッシュ
+  min_ttl     = 0
+  max_ttl     = 300       # 最大5分まで
+  
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"  # Cookieを無視
+    }
+    headers_config {
+      header_behavior = "whitelist"
+      headers {
+        items = ["Host", "Origin"]  # 必要最小限のヘッダーのみ
+      }
+    }
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+  }
+}
+
 # CloudFront ディストリビューション
+# デフォルト証明書を使用するように変更
 resource "aws_cloudfront_distribution" "ecs_distribution" {
   enabled             = true
   is_ipv6_enabled     = false
@@ -30,19 +56,10 @@ resource "aws_cloudfront_distribution" "ecs_distribution" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "${local.name_prefix}-cloudfront"
     
-    forwarded_values {
-      query_string = true
-      cookies {
-        forward = "all"
-      }
-      # リクエストヘッダーをそのまま転送
-      headers = ["Host", "Origin", "Authorization", "X-Forwarded-For"]
-    }
+    # 新しいキャッシュポリシーを使用
+    cache_policy_id = aws_cloudfront_cache_policy.minimal_cache_policy.id
     
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 0  # テスト用にキャッシュを無効化
-    max_ttl                = 0  # テスト用にキャッシュを無効化
     compress               = true
   }
   
@@ -53,7 +70,7 @@ resource "aws_cloudfront_distribution" "ecs_distribution" {
     }
   }
   
-  # SSL証明書設定（テスト用にCloudFrontのデフォルト証明書使用）
+  # デフォルト証明書を使用する設定
   viewer_certificate {
     cloudfront_default_certificate = true
   }
@@ -63,29 +80,12 @@ resource "aws_cloudfront_distribution" "ecs_distribution" {
     Environment = "test"
     Name        = "test-ecs-cloudfront-distribution"
   })
-}
-
-resource "aws_cloudfront_cache_policy" "minimal_cache_policy" {
-  name        = "MinimalCache-TestPolicy"
-  comment     = "Policy with minimal caching for testing"
-  default_ttl = 60        # 1分間キャッシュ
-  min_ttl     = 0
-  max_ttl     = 300       # 最大5分まで
   
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = "none"  # Cookieを無視
-    }
-    headers_config {
-      header_behavior = "whitelist"
-      headers {
-        items = ["Host", "Origin"]  # 必要最小限のヘッダーのみ
-      }
-    }
-    query_strings_config {
-      query_string_behavior = "all"
-    }
-    enable_accept_encoding_gzip   = true
-    enable_accept_encoding_brotli = true
-  }
+  # 依存関係の削除（カスタム証明書を使用しないため）
+  # depends_on = [aws_acm_certificate.cloudfront_cert]
+  
+  # ライフサイクル設定も必要なければ削除
+  # lifecycle {
+  #   ignore_changes = []
+  # }
 }
