@@ -1,4 +1,6 @@
-# ECSクラスター
+#####################################################################
+# ecs_cluster
+#####################################################################
 resource "aws_ecs_cluster" "ecs-cluster" {
   name = "${local.name_prefix}-cluster"
 
@@ -12,16 +14,9 @@ resource "aws_ecs_cluster" "ecs-cluster" {
   })
 }
 
-# CloudWatch Logs グループ
-resource "aws_cloudwatch_log_group" "log_basis" {
-  name              = "${local.name_prefix}--basis-cluster"
-  retention_in_days = 30
-  tags = merge(local.common_tags, {
-    Environment = "ecs-basis-${local.environment}"
-  })
-}
-
-# タスク定義 (Next.js 用)
+#####################################################################
+# task_definition
+#####################################################################
 resource "aws_ecs_task_definition" "basis-task" {
   family                   = "basis-app"
   network_mode             = "awsvpc"
@@ -71,7 +66,9 @@ resource "aws_ecs_task_definition" "basis-task" {
   })
 }
 
-# ECSサービス
+#####################################################################
+# ecs_service
+#####################################################################
 resource "aws_ecs_service" "basis-service" {
   name            = "basis-app-service"
   cluster         = aws_ecs_cluster.ecs-cluster.id
@@ -107,7 +104,9 @@ resource "aws_ecs_service" "basis-service" {
   })
 }
 
-# Auto Scaling
+#####################################################################
+# auto Scaling
+#####################################################################
 resource "aws_appautoscaling_target" "ecs_target" {
   max_capacity       = 2
   min_capacity       = 1
@@ -132,4 +131,15 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
     scale_in_cooldown  = 300
     scale_out_cooldown = 300
   }
+}
+
+#####################################################################
+# CloudWatch Logs group
+#####################################################################
+resource "aws_cloudwatch_log_group" "log_basis" {
+  name              = "${local.name_prefix}--basis-cluster"
+  retention_in_days = 30
+  tags = merge(local.common_tags, {
+    Environment = "ecs-basis-${local.environment}"
+  })
 }

@@ -1,18 +1,19 @@
-### vpc ##########################################################################
-
-# VPCのIDを出力
+#####################################################################
+# VPC
+#####################################################################
+# VPC ID
 output "vpc_id" {
   description = "VPC ID"
   value       = aws_vpc.vpc.id
 }
 
-# インターネットゲートウェイのIDを出力
+# IGW ID
 output "internet_gateway_id" {
-  description = "Internet Gateway ID"
+  description = "IGW ID"
   value       = aws_internet_gateway.inet-gw.id
 }
 
-# パブリックサブネットのIDを出力
+# Public subnet ID
 output "public_subnet_1a_id" {
   description = "Public Subnet 1a ID"
   value       = aws_subnet.public_1a.id
@@ -23,7 +24,7 @@ output "public_subnet_1c_id" {
   value       = aws_subnet.public_1c.id
 }
 
-# プライベートサブネットのIDを出力
+# Private subnet ID
 output "private_subnet_1a_id" {
   description = "Private Subnet 1a ID"
   value       = aws_subnet.private_1a.id
@@ -34,30 +35,32 @@ output "private_subnet_1c_id" {
   value       = aws_subnet.private_1c.id
 }
 
-# NAT GatewayのIDを出力
+# NAT Gateway ID
 output "nat_gateway_id" {
   description = "NAT Gateway ID"
   value       = aws_nat_gateway.nat_gw.id
 }
 
-# NAT EIPのIDを出力
+# NAT EIP ID
 output "nat_eip_id" {
-  description = "Elastic IP (EIP) ID for NAT Gateway"
+  description = "NAT EIP ID"
   value       = aws_eip.nat_eip.id
 }
 
-# ルートテーブルのIDを出力
+# Route table ID
 output "public_route_table_id" {
-  description = "Public Route Table ID"
+  description = "Public Route table ID"
   value       = aws_route_table.public_rt.id
 }
 
 output "private_route_table_id" {
-  description = "Private Route Table ID"
+  description = "Private Route table ID"
   value       = aws_route_table.private_rt.id
 }
 
-### security_group ##########################################################################
+#####################################################################
+# security froup
+#####################################################################
 # ALB
 output "alb_sg" {
   description = "alb sg"
@@ -72,7 +75,7 @@ output "ecs_basis_sg" {
 
 # ECS フロント側
 output "ecs_front_sg" {
-  description = "ecs_basis_sg"
+  description = "ecs_front_sg"
   value       = aws_security_group.ecs_basis_sg.id
 }
 
@@ -82,46 +85,57 @@ output "rds_sg" {
   value       = aws_security_group.rds_sg.id
 }
 
-
-### iam ##########################################################################
-# タスク実行ロール
+#####################################################################
+# iam
+#####################################################################
+# ECSタスク実行ロール
 output "ecs_task_execution_role" {
   description = "ecs_task_execution_role"
   value       = aws_iam_role.ecs_task_execution_role.arn
 }
 
-# タスク実行ロール
+# ECSタスクロール
 output "ecs_task_role" {
   description = "ecs_task_role"
   value       = aws_iam_role.ecs_task_role.arn
 }
 
-### alb ##########################################################################
+#####################################################################
+# ALB
+#####################################################################
 # ターゲットグループARN
 output "alb_arn" {
   description = "tg_gp_arn"
   value       = aws_lb_target_group.tg_gp.arn
 }
 
-### cloudfront ##########################################################################
+#####################################################################
+# cloudfront
+#####################################################################
+# Clodfront Domain_name
 output "cloudfront_domain_name" {
-  description = "CloudFrontのドメイン名 - このURLからアプリケーションにアクセスできます"
+  description = "Clodfront Domain_name"
   value       = aws_cloudfront_distribution.ecs_distribution.domain_name
   
 }
 
+# Clodfront istribution ID
 output "cloudfront_distribution_id" {
-  description = "CloudFrontディストリビューションID"
+  description = "Clodfront istribution ID"
   value       = aws_cloudfront_distribution.ecs_distribution.id
 }
 
-### s3 ##########################################################################
+#####################################################################
+# s3
+#####################################################################
+# フロントエンドバケット名
 output "frontend_bucket_name" {
-  description = "フロントエンドバケット名"
+  description = "s3 frontend_bucket_name"
   value       = aws_s3_bucket.frontend_bucket.id
 }
 
+# フロントエンドバケット ARN
 output "frontend_bucket_arn" {
-  description = "フロントエンドバケットのARN"
+  description = "s3 frontend_bucket_arn"
   value       = aws_s3_bucket.frontend_bucket.arn
 }

@@ -1,4 +1,7 @@
-# タスク実行ロール
+#####################################################################
+# iam role
+#####################################################################
+# ECSタスク実行ロール
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "ecs-task-execution-role"
 
@@ -19,13 +22,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   })
 }
 
-# ポリシーアタッチメント
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# タスクロール（コンテナからAWSリソースへのアクセス用）
+# ECSタスクロール（コンテナからAWSリソースへのアクセス用）
 resource "aws_iam_role" "ecs_task_role" {
   name = "ecs-task-role"
 
@@ -44,4 +41,12 @@ resource "aws_iam_role" "ecs_task_role" {
         }
     ]
   })
+}
+
+#####################################################################
+# policy_attachment
+#####################################################################
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }

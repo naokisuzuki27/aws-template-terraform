@@ -1,10 +1,12 @@
-# AWSを定義
+#####################################################################
+# provider
+#####################################################################
 provider "aws" {
   region = local.region
 }
-
-# リソース作成
-# VPC
+#####################################################################
+# vpc
+#####################################################################
 resource "aws_vpc" "vpc" {
   cidr_block = "192.168.0.0/24"
 
@@ -13,7 +15,9 @@ resource "aws_vpc" "vpc" {
   })
 }
 
-# インターネットゲートウェイ
+#####################################################################
+# internet_gateway
+#####################################################################
 resource "aws_internet_gateway" "inet-gw" {
   vpc_id = aws_vpc.vpc.id
 
@@ -22,7 +26,9 @@ resource "aws_internet_gateway" "inet-gw" {
   })
 }
 
-# パブリックサブネット
+#####################################################################
+# public_subnet
+#####################################################################
 resource "aws_subnet" "public_1a" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "192.168.0.0/28"
@@ -45,7 +51,9 @@ resource "aws_subnet" "public_1c" {
   })
 }
 
-# プライベートサブネット
+#####################################################################
+# private_subnet
+#####################################################################
 resource "aws_subnet" "private_1a" {
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "192.168.0.128/28"
@@ -68,7 +76,9 @@ resource "aws_subnet" "private_1c" {
   })
 }
 
-# Elastic IP (EIP) for NAT Gateway
+#####################################################################
+# elastic ip for nat gateway
+#####################################################################
 resource "aws_eip" "nat_eip" {
   domain = "vpc"
 
@@ -77,7 +87,9 @@ resource "aws_eip" "nat_eip" {
   })
 }
 
-# NAT Gateway (パブリックサブネット 1a に設置)
+#####################################################################
+# nat gateway
+#####################################################################
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public_1a.id
@@ -86,8 +98,9 @@ resource "aws_nat_gateway" "nat_gw" {
     Name = "${local.name_prefix}-nat-gw"
   })
 }
-
-# パブリックサブネット用のルートテーブル
+#####################################################################
+# public_route_table
+#####################################################################
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.vpc.id
 
@@ -101,13 +114,15 @@ resource "aws_route_table" "public_rt" {
   })
 }
 
-# プライベートサブネット用のルートテーブル
+#####################################################################
+# private_route_table
+#####################################################################
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_gw.id  # NAT Gateway 経由で通信
+    gateway_id = aws_nat_gateway.nat_gw.id  # NAT Gateway経由
   }
 
   tags = merge(local.common_tags, {
@@ -115,7 +130,9 @@ resource "aws_route_table" "private_rt" {
   })
 }
 
-# ルートテーブルとパブリックサブネットを関連付け
+#####################################################################
+# public_route_table_association
+#####################################################################
 resource "aws_route_table_association" "public_1a" {
   subnet_id      = aws_subnet.public_1a.id
   route_table_id = aws_route_table.public_rt.id
@@ -126,7 +143,9 @@ resource "aws_route_table_association" "public_1c" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# ルートテーブルとプライベートサブネットを関連付け
+#####################################################################
+# private_route_table_association
+#####################################################################
 resource "aws_route_table_association" "private_1a" {
   subnet_id      = aws_subnet.private_1a.id
   route_table_id = aws_route_table.private_rt.id

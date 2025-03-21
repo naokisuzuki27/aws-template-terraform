@@ -1,4 +1,6 @@
-# ECSクラスター
+#####################################################################
+# ecs_cluster
+#####################################################################
 resource "aws_ecs_cluster" "ecs-front-cluster" {
   name = "${local.name_prefix}-front-cluster"
 
@@ -12,17 +14,9 @@ resource "aws_ecs_cluster" "ecs-front-cluster" {
   })
 }
 
-# CloudWatch Logs グループ
-resource "aws_cloudwatch_log_group" "log_front" {
-  name              = "${local.name_prefix}-front-cluster"
-  retention_in_days = 30
-
-  tags = merge(local.common_tags, {
-    Environment = "ecs-front-${local.environment}"
-  })
-}
-
-# タスク定義 (Next.js 用)
+#####################################################################
+# task_definition
+#####################################################################
 resource "aws_ecs_task_definition" "front-task" {
   family                   = "front-app"
   network_mode             = "awsvpc"
@@ -72,7 +66,9 @@ resource "aws_ecs_task_definition" "front-task" {
   })
 }
 
-# ECSサービス
+#####################################################################
+# ecs_service
+#####################################################################
 resource "aws_ecs_service" "front-service" {
   name            = "front-app-service"
   cluster         = aws_ecs_cluster.ecs-front-cluster.id
@@ -108,7 +104,9 @@ resource "aws_ecs_service" "front-service" {
   })
 }
 
-# Auto Scaling
+#####################################################################
+# auto Scaling
+#####################################################################
 resource "aws_appautoscaling_target" "front-ecs_target" {
   max_capacity       = 2
   min_capacity       = 1
@@ -133,4 +131,16 @@ resource "aws_appautoscaling_policy" "front-ecs_policy_cpu" {
     scale_in_cooldown  = 300
     scale_out_cooldown = 300
   }
+}
+
+#####################################################################
+# CloudWatch Logs group
+#####################################################################
+resource "aws_cloudwatch_log_group" "log_front" {
+  name              = "${local.name_prefix}-front-cluster"
+  retention_in_days = 30
+
+  tags = merge(local.common_tags, {
+    Environment = "ecs-front-${local.environment}"
+  })
 }

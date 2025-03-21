@@ -1,4 +1,7 @@
-# ALB ##########################################################################################
+#####################################################################
+# security froup
+#####################################################################
+# ALB
 resource "aws_security_group" "alb_sg" {
   name_prefix = "${local.name_prefix}-alb-sg"
   vpc_id      = aws_vpc.vpc.id
@@ -8,7 +11,7 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# 基盤ECS用 ##########################################################################################
+# 基盤ECS用
 resource "aws_security_group" "ecs_basis_sg" {
   name        = "${local.name_prefix}-ecs-basis-sg"
   description = "Security group for ECS tasks"
@@ -19,7 +22,7 @@ resource "aws_security_group" "ecs_basis_sg" {
   })
 }
 
-# サーバーレンダリングECS用 ##########################################################################################
+# サーバーレンダリングECS用
 resource "aws_security_group" "ecs_front_sg" {
   name        = "${local.name_prefix}-ecs-front-sg"
   description = "Security group for ECS tasks"
@@ -30,7 +33,7 @@ resource "aws_security_group" "ecs_front_sg" {
   })
 }
 
-# RDS ##########################################################################################
+# RDS
 resource "aws_security_group" "rds_sg" {
   name        = "${local.name_prefix}-rds_sg"
   description = "Security group for rds "
@@ -40,8 +43,10 @@ resource "aws_security_group" "rds_sg" {
     Name = "${local.name_prefix}-rds_sg"
   })
 }
-
-# ALBに対するインバウンドルール ##########################################################################################
+#####################################################################
+# security froup rule
+#####################################################################
+# ALBインバウンド
 resource "aws_security_group_rule" "alb_ingress_rule_443" {
   security_group_id = aws_security_group.alb_sg.id
   type              = "ingress"
@@ -51,7 +56,7 @@ resource "aws_security_group_rule" "alb_ingress_rule_443" {
   prefix_list_ids   = ["pl-58a04531"]
 }
 
-# ALBに対するアウトバウンドルール ##########################################################################################
+# ALBアウトバウンド
 resource "aws_security_group_rule" "alb_egress_ecs_basis_rule_3000" {
   security_group_id = aws_security_group.alb_sg.id
   type              = "egress"
@@ -70,7 +75,7 @@ resource "aws_security_group_rule" "alb_egress_ecs_front_rule_3000" {
   source_security_group_id   = aws_security_group.ecs_front_sg.id
 }
 
-# ECS基盤に対するインバウンドルール ##########################################################################################
+# 基盤ECS インバウンドルール
 resource "aws_security_group_rule" "ecs_basis_ingress_rule_80" {
   security_group_id = aws_security_group.ecs_basis_sg.id
   type              = "ingress"
@@ -107,7 +112,7 @@ resource "aws_security_group_rule" "ecs_basis_ingress_rule_3000" {
   source_security_group_id   = aws_security_group.alb_sg.id
 }
 
-# ECS基盤に対するアウトバウンドルール ##########################################################################################
+# 基盤ECS アウトバウンドルール
 resource "aws_security_group_rule" "ecs_basis_egress_rule_80" {
   security_group_id = aws_security_group.ecs_basis_sg.id
   type              = "egress"
@@ -135,7 +140,7 @@ resource "aws_security_group_rule" "ecs_basis_egress_rule_3306" {
   source_security_group_id   = aws_security_group.rds_sg.id
 }
 
-# ECSフロントに対するインバウンドルール ##########################################################################################
+# サーバーレンダリングECS インバウンド
 resource "aws_security_group_rule" "ecs_front_ingress_rule_80" {
   security_group_id = aws_security_group.ecs_front_sg.id
   type              = "ingress"
@@ -163,7 +168,7 @@ resource "aws_security_group_rule" "ecs_front_ingress_rule_3000" {
   source_security_group_id   = aws_security_group.alb_sg.id
 }
 
-# ECSフロントに対するアウトバウンドルール ##########################################################################################
+# サーバーレンダリングECS アウトバウンド
 resource "aws_security_group_rule" "ecs_front_egress_rule" {
   security_group_id = aws_security_group.ecs_front_sg.id
   type              = "egress"
@@ -173,7 +178,7 @@ resource "aws_security_group_rule" "ecs_front_egress_rule" {
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
-# RDSに対するインバウンドルール ##########################################################################################
+# RDS インバウンド
 resource "aws_security_group_rule" "rds_ingress_rule_3306" {
   security_group_id = aws_security_group.rds_sg.id
   type              = "ingress"
@@ -183,7 +188,7 @@ resource "aws_security_group_rule" "rds_ingress_rule_3306" {
   source_security_group_id   = aws_security_group.ecs_basis_sg.id
 }
 
-# RDSに対するアウトバウンドルール ##########################################################################################
+# RDS アウトバウンド
 resource "aws_security_group_rule" "rds_egress_rule_3306" {
   security_group_id = aws_security_group.rds_sg.id
   type              = "egress"
