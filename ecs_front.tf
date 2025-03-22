@@ -90,7 +90,7 @@ resource "aws_ecs_service" "front-service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.tg_gp.arn
-    container_name   = "app"
+    container_name   = "front-app"
     container_port   = 3000  # Next.js のポートを指定
   }
 
@@ -119,9 +119,9 @@ resource "aws_appautoscaling_target" "front-ecs_target" {
 resource "aws_appautoscaling_policy" "front-ecs_policy_cpu" {
   name               = "cpu-auto-scaling"
   policy_type        = "TargetTrackingScaling"
-  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
-  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
-  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+  resource_id        = aws_appautoscaling_target.front-ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.front-ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.front-ecs_target.service_namespace
 
   target_tracking_scaling_policy_configuration {
     predefined_metric_specification {

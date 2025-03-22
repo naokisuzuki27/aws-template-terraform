@@ -128,14 +128,8 @@ output "cloudfront_distribution_id" {
 #####################################################################
 # s3
 #####################################################################
-# フロントエンドバケット名
+# フロントエンドバケット ドメイン名
 output "frontend_bucket_name" {
-  description = "s3 frontend_bucket_name"
-  value       = aws_s3_bucket.frontend_bucket.id
-}
-
-# フロントエンドバケット ARN
-output "frontend_bucket_arn" {
-  description = "s3 frontend_bucket_arn"
-  value       = aws_s3_bucket.frontend_bucket.arn
+  description = "s3 frontend_bucket_domain_name"
+  value       = aws_s3_bucket.frontend_assets.bucket_regional_domain_name
 }
