@@ -1,0 +1,35 @@
+[
+  {
+    "name": "front-app",
+    "image": "${ecr_repository_url}:${image_tag}",
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 3000,
+        "hostPort": 3000,
+        "protocol": "tcp"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${log_group_name}",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "environment": [
+      {
+        "name": "ENVIRONMENT",
+        "value": "production"
+      }
+    ],
+    "healthCheck": {
+      "command": ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"],
+      "interval": 30,
+      "timeout": 5,
+      "retries": 3,
+      "startPeriod": 60
+    }
+  }
+]
