@@ -23,6 +23,7 @@ resource "aws_lb_target_group" "tg_gp" {
   port     = 3000
   protocol = "HTTP"
   vpc_id   = aws_vpc.vpc.id
+  target_type = "ip"
 
   health_check {
     path                = "/"
