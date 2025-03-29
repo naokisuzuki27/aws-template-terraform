@@ -13,8 +13,8 @@
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
-        "awslogs-group": "${aws_cloudwatch_log_group.log_basis.name}",
-        "awslogs-region": "${local.region}",
+        "awslogs-group": "${log_group_name}",
+        "awslogs-region": "${region}",
         "awslogs-stream-prefix": "ecs"
       }
     },

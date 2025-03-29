@@ -133,3 +133,11 @@ output "frontend_bucket_name" {
   description = "s3 frontend_bucket_domain_name"
   value       = aws_s3_bucket.frontend_assets.bucket_regional_domain_name
 }
+
+#####################################################################
+# ecr
+#####################################################################
+output "ecr_repository" {
+  description = "ecr repository url"
+  value       = aws_ecr_repository.main.repository_url
+}

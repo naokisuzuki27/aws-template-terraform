@@ -25,9 +25,17 @@ resource "aws_ecs_task_definition" "basis-task" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
-
-  container_definitions = file("./file/ecs_basis.json")
+  container_definitions = templatefile(
+    "./file/ecs_basis.json",
+    {
+      ecr_repository_url = aws_ecr_repository.main.repository_url,
+      image_tag          = "latest",
+      region             = local.region,
+      log_group_name     = aws_cloudwatch_log_group.log_basis.name
+    }
+  )
 }
+
 
 #####################################################################
 # ecs_service
@@ -53,7 +61,7 @@ resource "aws_ecs_service" "basis-service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.tg_gp.arn
-    container_name   = "basis-app-service"
+    container_name   = "basis-app"
     container_port   = 3000  # Next.js のポートを指定
   }
 
