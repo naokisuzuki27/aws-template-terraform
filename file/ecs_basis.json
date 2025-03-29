@@ -2,7 +2,7 @@
   "containerDefinitions": [
     {
       "name": "basis-app",
-      "image": "basis/nextjs-app:latest",
+      "image": "${ecr_repository_url}:${image_tag}",
       "essential": true,
       "portMappings": [
         {
