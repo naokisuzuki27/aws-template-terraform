@@ -26,44 +26,7 @@ resource "aws_ecs_task_definition" "basis-task" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
-  container_definitions = jsonencode([{
-    name      = "basis-app"
-    image     = "basis/nextjs-app:latest"  # Next.js の Docker イメージ
-    essential = true
-    portMappings = [
-      {
-        containerPort = 3000  # Next.js がデフォルトで使用するポート
-        hostPort      = 3000  # ECS 上でも 3000 番ポートを使用
-        protocol      = "tcp"
-      }
-    ]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.log_basis.name
-        "awslogs-region"        = local.region
-        "awslogs-stream-prefix" = "ecs"
-      }
-    }
-    environment = [
-      {
-        name  = "ENVIRONMENT",
-        value = "production"
-      }
-    ]
-    healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]  # Next.js アプリケーションの健康チェック
-      interval    = 30
-      timeout     = 5
-      retries     = 3
-      startPeriod = 60
-    }
-  }])
-
-  tags = merge(local.common_tags, {
-    Name        = "nextjs-app-task-basis-definition"
-    Environment = "production"
-  })
+  container_definitions = file("./file/ecs_basis.json")
 }
 
 #####################################################################
