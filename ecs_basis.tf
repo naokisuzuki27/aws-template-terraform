@@ -108,7 +108,7 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
 # CloudWatch Logs group
 #####################################################################
 resource "aws_cloudwatch_log_group" "log_basis" {
-  name              = "${local.name_prefix}--basis-cluster"
+  name              = "${local.name_prefix}-basis-cluster"
   retention_in_days = 30
   tags = merge(local.common_tags, {
     Environment = "ecs-basis-${local.environment}"
